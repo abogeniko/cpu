@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mailer · ZeptoMail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-2: #121a35;
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.09);
+      --text: #e7ecf5;
+      --muted: #8b96ac;
+      --accent: #6366f1;
+      --accent-2: #22d3ee;
+      --danger: #f87171;
+      --ok: #34d399;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(99,102,241,0.25), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(34,211,238,0.18), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg-2));
+      min-height: 100vh;
+      padding: 2.5rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .shell { width: 100%; max-width: 800px; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.35rem 0.75rem; border-radius: 999px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.35);
+      color: #c7d2fe; font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.02em; text-transform: uppercase;
+    }
+    .badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2);
+    }
+    h1 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700; margin: 0.75rem 0 0.4rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #fff, #b8c4ff);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+    }
+    .subtitle { color: var(--muted); font-size: 0.95rem; margin: 0; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field.full { grid-column: 1 / -1; }
+    label {
+      font-size: 0.82rem; font-weight: 600;
+      color: #c4cbe0; letter-spacing: 0.01em;
+    }
+    label .hint {
+      color: var(--muted); font-weight: 400;
+      font-size: 0.75rem; margin-left: 0.35rem;
+    }
+    input[type="text"], input[type="email"], input[type="password"], textarea {
+      width: 100%;
+      padding: 0.75rem 0.9rem;
+      background: rgba(8,12,24,0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.92rem;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: rgba(99,102,241,0.75);
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+      background: rgba(8,12,24,0.85);
+    }
+    input::placeholder, textarea::placeholder { color: #5b6580; }
+    textarea { resize: vertical; line-height: 1.5; }
+    #to { min-height: 110px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.85rem; }
+    #message { min-height: 170px; }
+    .counter { color: var(--muted); font-size: 0.75rem; min-height: 1em; }
+    .dropzone {
+      position: relative;
+      border: 1.5px dashed rgba(255,255,255,0.18);
+      border-radius: 14px;
+      padding: 1.4rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: rgba(8,12,24,0.35);
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(99,102,241,0.08);
+    }
+    .dropzone input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .dropzone .dz-icon {
+      width: 40px; height: 40px; margin: 0 auto 0.5rem;
+      display: grid; place-items: center;
+      border-radius: 10px;
+      background: rgba(99,102,241,0.15);
+      color: #a5b4fc;
+    }
+    .dropzone .dz-title { font-weight: 600; font-size: 0.92rem; }
+    .dropzone .dz-sub { color: var(--muted); font-size: 0.78rem; margin-top: 0.2rem; }
+    .filelist { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .filechip {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.6rem; padding: 0.5rem 0.75rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px; font-size: 0.82rem;
+    }
+    .filechip .meta { color: var(--muted); font-size: 0.76rem; }
+    .filechip button {
+      background: transparent; border: none;
+      color: var(--danger); cursor: pointer;
+      font-size: 0.9rem; padding: 0 0.25rem;
+    }
+    .actions { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    button.primary {
+      flex: 1; min-width: 180px;
+      padding: 0.85rem 1.2rem;
+      font-family: inherit; font-weight: 600; font-size: 0.95rem;
+      color: #fff; border: none; border-radius: 12px; cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      box-shadow: 0 10px 30px -10px rgba(99,102,241,0.7);
+      transition: transform 0.08s, filter 0.15s, box-shadow 0.15s;
+    }
+    button.primary:hover { filter: brightness(1.08); }
+    button.primary:active { transform: translateY(1px); }
+    button.primary:disabled {
+      filter: grayscale(0.4) brightness(0.7);
+      cursor: not-allowed; box-shadow: none;
+    }
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: -2px; margin-right: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status {
+      margin-top: 1.25rem; padding: 0.85rem 1rem;
+      border-radius: 12px; font-size: 0.85rem; line-height: 1.5;
+      display: none; word-break: break-word; white-space: pre-wrap;
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    }
+    .status.show { display: block; }
+    .status.ok { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.35); color: #a7f3d0; }
+    .status.err { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.35); color: #fecaca; }
+    .status.info { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.35); color: #c7d2fe; }
+    .footer-note {
+      text-align: center; color: var(--muted);
+      font-size: 0.78rem; margin-top: 1.25rem;
+    }
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .card { padding: 1.4rem; border-radius: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="header">
+      <span class="badge"><span class="dot"></span> ZeptoMail · Cloudflare Pages</span>
+      <h1>Compose &amp; Send</h1>
+      <p class="subtitle">Transactional mail, delivered through ZeptoMail.</p>
+    </header>
+
+    <form class="card" id="mailer-form" novalidate>
+      <div class="grid">
+
+        <!-- Recipients -->
+        <div class="field full">
+          <label for="to">To <span class="hint">one recipient per line</span></label>
+          <textarea id="to" name="to" required rows="4"
+            placeholder="alice@example.com&#10;bob@example.com&#10;carol@example.com"></textarea>
+          <div class="counter" id="recipientCount"></div>
+        </div>
+
+        <!-- Sender -->
+        <div class="field">
+          <label for="from">From <span class="hint">verified sender</span></label>
+          <input id="from" name="from" type="email" required placeholder="sender@yourdomain.com" />
+        </div>
+
+        <div class="field">
+          <label for="displayName">Display name</label>
+          <input id="displayName" name="displayName" type="text" placeholder="Your Name" />
+        </div>
+
+        <!-- Reply-to -->
+        <div class="field">
+          <label for="replyTo">Reply-to</label>
+          <input id="replyTo" name="replyTo" type="email" placeholder="you@example.com" />
+        </div>
+
+        <!-- Endpoint secret -->
+        <div class="field">
+          <label for="secret">Endpoint secret</label>
+          <input id="secret" name="secret" type="password" required placeholder="X-Endpoint-Secret" />
+        </div>
+
+        <!-- Subject -->
+        <div class="field full">
+          <label for="subject">Subject</label>
+          <input id="subject" name="subject" type="text" required placeholder="Hello from Cloudflare Pages" />
+        </div>
+
+        <!-- Message -->
+        <div class="field full">
+          <label for="message">Message <span class="hint">HTML allowed</span></label>
+          <textarea id="message" name="message" required placeholder="&lt;p&gt;Hi there,&lt;/p&gt;&#10;&lt;p&gt;This is a test.&lt;/p&gt;"></textarea>
+        </div>
+
+        <!-- Attachments -->
+        <div class="field full">
+          <label>Attachments <span class="hint">max 5 files · 5 MB each</span></label>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="files" name="files" multiple />
+            <div class="dz-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div class="dz-title">Click or drag files here</div>
+            <div class="dz-sub">PDF, PNG, JPG, DOCX — up to 5 files</div>
+          </div>
+          <div class="filelist" id="filelist"></div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="primary" id="submitBtn">Send email</button>
+      </div>
+
+      <div class="status" id="status"></div>
+    </form>
+
+    <p class="footer-note">Files are uploaded to your Cloudflare Function and forwarded to ZeptoMail. Nothing is stored.</p>
+  </div>
+
+  <script>
+    const form = document.getElementById('mailer-form');
+    const statusEl = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('files');
+    const filelist = document.getElementById('filelist');
+    const toEl = document.getElementById('to');
+    const countEl = document.getElementById('recipientCount');
+
+    const MAX_FILES = 5;
+    const MAX_SIZE = 5 * 1024 * 1024;
+    const MAX_RECIPIENTS = 500;
+    let selectedFiles = [];
+
+    function setStatus(kind, text) {
+      statusEl.className = 'status show ' + kind;
+      statusEl.textContent = text;
+    }
+    function clearStatus() {
+      statusEl.className = 'status';
+      statusEl.textContent = '';
+    }
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+    function parseRecipients() {
+      return toEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+    }
+    function updateCount() {
+      const n = parseRecipients().length;
+      countEl.textContent = n ? `${n} recipient${n === 1 ? '' : 's'}` : '';
+    }
+    toEl.addEventListener('input', updateCount);
+
+    function renderFiles() {
+      filelist.innerHTML = '';
+      selectedFiles.forEach((file, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'filechip';
+        chip.innerHTML = `
+          <div>
+            <div>${escapeHtml(file.name)}</div>
+            <div class="meta">${formatSize(file.size)}</div>
+          </div>
+          <button type="button" aria-label="Remove">✕</button>
+        `;
+        chip.querySelector('button').addEventListener('click', () => {
+          selectedFiles.splice(idx, 1);
+          renderFiles();
+        });
+        filelist.appendChild(chip);
+      });
+    }
+    function addFiles(fileList) {
+      for (const file of fileList) {
+        if (selectedFiles.length >= MAX_FILES) {
+          setStatus('err', `You can attach up to ${MAX_FILES} files.`);
+          return;
+        }
+        if (file.size > MAX_SIZE) {
+          setStatus('err', `"${file.name}" exceeds the 5 MB limit.`);
+          return;
+        }
+        selectedFiles.push(file);
+      }
+      renderFiles();
+    }
+
+    fileInput.addEventListener('change', (e) => { addFiles(e.target.files); fileInput.value = ''; });
+    ['dragenter', 'dragover'].forEach(evt =>
+      dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); })
+    );
+    ['dragleave', 'drop'].forEach(evt =>
+      dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); })
+    );
+    dropzone.addEventListener('drop', (e) => {
+      if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearStatus();
+
+      const to = parseRecipients();
+      const from = document.getElementById('from').value.trim();
+      const displayName = document.getElementById('displayName').value.trim();
+      const replyTo = document.getElementById('replyTo').value.trim();
+      const secret = document.getElementById('secret').value;
+      const subject = document.getElementById('subject').value.trim();
+      const message = document.getElementById('message').value;
+
+      if (!to.length) { setStatus('err', 'At least one recipient is required.'); return; }
+      if (to.length > MAX_RECIPIENTS) {
+        setStatus('err', `ZeptoMail allows up to ${MAX_RECIPIENTS} recipients per send. Split the list.`);
+        return;
+      }
+      if (!from || !subject || !message || !secret) {
+        setStatus('err', 'From, Subject, Message, and Endpoint secret are required.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span>Sending…';
+      setStatus('info', 'Sending, please wait…');
+
+      const fd = new FormData();
+      fd.append('to', JSON.stringify(to));
+      fd.append('from', from);
+      fd.append('displayName', displayName);
+      fd.append('replyTo', replyTo);
+      fd.append('subject', subject);
+      fd.append('message', message);
+      selectedFiles.forEach(f => fd.append('files', f, f.name));
+
+      try {
+        const res = await fetch('/api/send', {
+          method: 'POST',
+          headers: { 'X-Endpoint-Secret': secret },
+          body: fd,
+        });
+        const text = await res.text();
+        if (res.ok) {
+          setStatus('ok', `Sent ✓ to ${to.length} recipient(s)\n${text}`);
+          selectedFiles = [];
+          renderFiles();
+        } else {
+          setStatus('err', `HTTP ${res.status}\n${text}`);
+        }
+      } catch (err) {
+        setStatus('err', `Network error: ${err.message}`);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send email';
+      }
+    });
+  </script>
+</body>
+</html>
